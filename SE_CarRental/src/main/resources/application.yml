@@ -44,7 +44,7 @@ app:
     api-key: ${CURRENCY_CONVERTER_API_KEY:converter-secret-key}
 
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}   
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5174}   
 
 # ===== Actuator =====
 management:
