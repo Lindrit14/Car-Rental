@@ -67,7 +67,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/booking").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/booking/*/cancel").authenticated()
 
-                        .requestMatchers("/api/currency/**").authenticated()
+                        .requestMatchers("/api/currency/**").permitAll()
 
                         .anyRequest().authenticated()
                 )
