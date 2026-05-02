@@ -1,0 +1,13 @@
+[project]
+name = "currency-converter"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.9"
+dependencies = [
+    "lxml>=6.0.2",
+    "requests>=2.32.5",
+    "spyne",
+]
+
+[tool.uv.sources]
+spyne = { git = "https://github.com/arskom/spyne.git" }

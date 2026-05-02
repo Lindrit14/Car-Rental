@@ -1,0 +1,27 @@
+name: Deploy to VM
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:    # lets you trigger manually from the Actions tab
+
+concurrency:
+  group: deploy-vm
+  cancel-in-progress: false   # don't kill an in-flight deploy; queue instead
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: SSH + run deploy.sh on the VM
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host:     ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key:      ${{ secrets.VM_SSH_KEY }}
+          script_stop: true
+          command_timeout: 12m
+          script: |
+            cd ~/Car-Rental
+            ./deploy.sh

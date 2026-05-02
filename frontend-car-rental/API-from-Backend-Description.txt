@@ -1,0 +1,192 @@
+ Here's the complete API specification for your frontend agent:
+
+  ---
+  Car Rental Backend API Specification
+
+  Base URL & Config
+
+  - API Base: http://localhost:8080
+  - Auth: JWT Bearer token in Authorization header
+  - CORS: Allows localhost:3000 and localhost:5173
+  - Swagger UI: http://localhost:8080/swagger-ui.html
+
+  ---
+  Authentication (/api/user)
+
+  POST /api/user/register — Public
+
+  Request:
+  {
+    "email": "string (valid email)",
+    "password": "string (min 6 chars)",
+    "firstName": "string",
+    "lastName": "string"
+  }
+  Response (201):
+  { "token": "jwt-string", "email": "string", "role": "USER" }
+
+  POST /api/user/login — Public
+
+  Request:
+  { "email": "string", "password": "string" }
+  Response (200):
+  { "token": "jwt-string", "email": "string", "role": "USER|ADMIN" }
+
+  ---
+  Cars (/api/car)
+
+  POST /api/car — ADMIN only
+
+  Request:
+  {
+    "brand": "string",
+    "model": "string",
+    "licensePlate": "string (unique)",
+    "year": "integer (1950-2026)",
+    "dailyRate": "BigDecimal (positive)",
+    "carType": "ECONOMY|COMPACT|SUV|VAN|ELECTRIC|LUXURY",
+    "location": "string"
+  }
+  Response (201): CarResponse
+
+  GET /api/car — Authenticated
+
+  Response (200): CarResponse[]
+
+  GET /api/car/{carId} — Authenticated
+
+  Response (200): CarResponse
+
+  GET /api/car/type/{carType}?location=optional — Authenticated
+
+  Response (200): CarResponse[]
+
+  GET /api/car/{carId}/price?startDate=&endDate=&currency=USD — Authenticated
+
+  Response (200):
+  {
+    "carId": "UUID",
+    "price": "BigDecimal",
+    "dailyRate": "BigDecimal",
+    "days": "long",
+    "currency": "string",
+    "startDate": "LocalDate",
+    "endDate": "LocalDate"
+  }
+
+  PATCH /api/car/{carId} — ADMIN only
+
+  Request (all fields optional):
+  {
+    "brand": "string",
+    "model": "string",
+    "year": "integer",
+    "licensePlate": "string",
+    "carType": "string",
+    "dailyRate": "BigDecimal",
+    "location": "string",
+    "available": "boolean"
+  }
+  Response (200): CarResponse
+
+  DELETE /api/car/{carId} — ADMIN only
+
+  Response: 204 No Content
+
+  ---
+  Bookings (/api/booking)
+
+  POST /api/booking — Authenticated
+
+  Request:
+  {
+    "type": "ECONOMY|COMPACT|SUV|VAN|ELECTRIC|LUXURY",
+    "startDate": "LocalDate (today or future)",
+    "endDate": "LocalDate (after startDate)",
+    "location": "string"
+  }
+  Response (201): BookingResponse with status RESERVED
+
+  GET /api/booking/my — Authenticated (own bookings)
+
+  Response (200): BookingResponse[]
+
+  GET /api/booking/{bookingId} — ADMIN only
+
+  Response (200): BookingResponse
+
+  PUT /api/booking/{bookingId}/assign?carId=UUID — ADMIN only
+
+  Assigns a car, changes status to ACTIVE. Response (200): BookingResponse
+
+  PUT /api/booking/{bookingId}/return — ADMIN only
+
+  Changes status to RETURNED. Response (200): BookingResponse
+
+  PUT /api/booking/{bookingId}/cancel — Authenticated (owner only)
+
+  Only cancellable if status is RESERVED. Response (200): BookingResponse
+
+  ---
+  Currency (/api/currency)
+
+  GET /api/currency/convert?amount=&from=&to= — Authenticated
+
+  Response (200):
+  {
+    "originalAmount": "BigDecimal",
+    "convertedAmount": "BigDecimal",
+    "exchangeRate": "BigDecimal",
+    "fromCurrency": "string",
+    "toCurrency": "string",
+    "rateDate": "string",
+    "stale": "boolean"
+  }
+
+  GET /api/currency/currencies — Authenticated
+
+  Response (200): string[] (list of currency codes)
+
+  GET /api/currency/metadata — Authenticated
+
+  Response (200): { source, lastRefresh, rateDate, stale }
+
+  ---
+  Shared Types
+
+  CarResponse
+
+  { id: string, brand: string, model: string, year: number, dailyRate: number, licensePlate: string, carType: CarType,
+  location: string }
+
+  BookingResponse
+
+  { id: string, userId: string, carId: string | null, type: CarType, location: string, startDate: string, endDate:
+  string, dailyRate: number, totalPrice: number | null, status: BookingStatus }
+
+  Enums
+
+  type CarType = "ECONOMY" | "COMPACT" | "SUV" | "VAN" | "ELECTRIC" | "LUXURY"
+  type BookingStatus = "RESERVED" | "ACTIVE" | "RETURNED" | "CANCELLED"
+  type Role = "USER" | "ADMIN"
+
+  ---
+  Booking Flow (Business Logic)
+
+  1. User creates booking → status: RESERVED (no car assigned yet, picks cheapest daily rate for type+location)
+  2. Admin assigns a car → status: ACTIVE (car must match location, no overlapping bookings)
+  3. Admin marks return → status: RETURNED
+  4. User can cancel own booking only if RESERVED
+
+  ---
+  Auth Flow
+
+  1. Register/Login → receive JWT token
+  2. Store token, send as Authorization: Bearer <token> on all subsequent requests
+  3. Token expires in 24 hours
+  4. Role is embedded in the token (USER or ADMIN)
+
+  ---
+  This should give your frontend agent everything it needs. The key pages to build would be: Login/Register, Car Catalog
+   (browse/filter), Booking Flow (select type + dates + location), My Bookings (view/cancel), and an Admin Dashboard
+  (manage cars, assign cars to bookings, process returns).

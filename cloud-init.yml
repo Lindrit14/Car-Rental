@@ -1,0 +1,23 @@
+#cloud-config
+# Runs on first VM boot. Installs Docker + git so the bootstrap step in
+# README.md is just `git clone` + `./deploy.sh`.
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - docker.io
+  - docker-compose-v2
+  - git
+  - ufw
+
+runcmd:
+  - usermod -aG docker azureuser
+  - systemctl enable --now docker
+  # Modest hardening: only 22, 80, 443 in.
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow 22/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw --force enable

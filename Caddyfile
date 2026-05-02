@@ -1,0 +1,24 @@
+# Caddy auto-provisions a Let's Encrypt cert for {$PUBLIC_HOSTNAME}
+# on first request, as long as the hostname's DNS A record points at this VM.
+#
+# For local testing without a public hostname, set PUBLIC_HOSTNAME=:80 in .env
+# (a leading colon makes Caddy listen on plain HTTP without trying to fetch a cert).
+
+{$PUBLIC_HOSTNAME} {
+    encode zstd gzip
+
+    # Spring Boot API.
+    handle /api/* {
+        reverse_proxy api:8080
+    }
+
+    # Spring Actuator (kept under /actuator so /api/* doesn't shadow it).
+    handle /actuator/* {
+        reverse_proxy api:8080
+    }
+
+    # Everything else → React SPA.
+    handle {
+        reverse_proxy frontend:80
+    }
+}

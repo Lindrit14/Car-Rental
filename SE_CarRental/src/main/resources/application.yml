@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: car-rental-service
+
+  # ===== Database =====
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${POSTGRES_DB:carrental}
+    username: ${POSTGRES_USER:carrental}
+    password: ${POSTGRES_PASSWORD:serviceEngineering26}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  web:
+    error:
+      include-message: never
+      include-stacktrace: never
+      include-binding-errors: never
+      include-exception: false
+
+# ===== Server =====
+server:
+  port: ${SERVER_PORT:8080}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+
+# ===== JWT =====
+app:
+  jwt:
+    secret: ${JWT_SECRET:your-256-bit-secret-change-this-in-production-minimum-32-chars!!}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+  # ===== Currency Converter =====
+  currency:
+    converter-url: ${CURRENCY_CONVERTER_URL:http://localhost:8000}
+    api-key: ${CURRENCY_CONVERTER_API_KEY:converter-secret-key}
+
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}   
+
+# ===== Actuator =====
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

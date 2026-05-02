@@ -1,0 +1,21 @@
+.env
+.env.local
+*.local
+
+.DS_Store
+.idea/
+.vscode/
+
+backups/
+
+# ----- service build artifacts -----
+node_modules/
+dist/
+target/
+.venv/
+__pycache__/
+*.class
+*.log
+
+# uv (python)
+.python-version

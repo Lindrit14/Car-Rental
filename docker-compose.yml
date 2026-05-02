@@ -1,0 +1,113 @@
+# Car-Rental — full-stack deployment (monorepo layout).
+#
+# Layout (this file lives at the monorepo root):
+#   Car-Rental/                     ← repo root
+#     ├── docker-compose.yml        ← this file
+#     ├── Caddyfile, deploy.sh, .env, scripts/, .github/
+#     ├── SE_CarRental/             ← Spring Boot api
+#     ├── SE_CurrencyConverter/     ← Python SOAP currency service
+#     └── frontend-car-rental/      ← React + Vite SPA
+#
+# FRONTEND_PATH / API_PATH / CURRENCY_PATH are set in .env (see .env.example).
+
+name: car-rental
+
+services:
+  # ===== Reverse proxy + automatic HTTPS =====
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - api
+    environment:
+      PUBLIC_HOSTNAME: ${PUBLIC_HOSTNAME:?set PUBLIC_HOSTNAME in .env}
+
+  # ===== React SPA served by nginx =====
+  frontend:
+    build:
+      context: ${FRONTEND_PATH:-../frontend-car-rental}
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?set VITE_API_BASE_URL in .env}
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY:?set VITE_GOOGLE_MAPS_API_KEY in .env}
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  # ===== Spring Boot API =====
+  api:
+    build:
+      context: ${API_PATH:-../SE_CarRental}
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      CURRENCY_CONVERTER_URL: http://currency:8000
+      CURRENCY_CONVERTER_API_KEY: ${CURRENCY_API_KEY}
+      SERVER_PORT: 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      currency:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 60s
+
+  # ===== Python SOAP currency service =====
+  currency:
+    build:
+      context: ${CURRENCY_PATH:-../SE_CurrencyConverter}
+    restart: unless-stopped
+    expose:
+      - "8000"
+    environment:
+      CURRENCY_API_KEY: ${CURRENCY_API_KEY}
+      HOST: 0.0.0.0
+      PORT: "8000"
+    healthcheck:
+      # No /health endpoint on the SOAP service yet — fall back to TCP port reachability.
+      test: ["CMD-SHELL", "python -c 'import socket,sys; s=socket.socket(); s.settimeout(2); s.connect((\"127.0.0.1\",8000)); s.close()' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  # ===== PostgreSQL =====
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
