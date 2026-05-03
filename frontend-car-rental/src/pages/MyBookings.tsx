@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getMyBookings, cancelBooking } from "../api/bookings";
 import { getCarById } from "../api/cars";
 import type { Booking, BookingStatus, Car } from "../types";
@@ -94,46 +95,53 @@ export default function MyBookings() {
         {bookings.map((b) => (
           <div
             key={b.id}
-            className="border border-gray-200 rounded-lg p-4 shadow-sm flex flex-col"
+            className="border border-gray-200 rounded-lg shadow-sm flex flex-col hover:shadow-md transition-shadow"
           >
-            <div className="bg-amber-50 border border-amber-200 rounded p-2 mb-3">
-              <p className="text-[10px] uppercase tracking-wide text-amber-800 font-semibold mb-1">
-                Booking reference
-              </p>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 text-xs font-mono break-all text-gray-900">
-                  {b.id}
-                </code>
-                <button
-                  type="button"
-                  onClick={() => handleCopyId(b.id)}
-                  className="text-[11px] font-medium px-2 py-0.5 rounded border border-amber-300 hover:bg-amber-100 text-amber-800 whitespace-nowrap"
-                >
-                  {copiedId === b.id ? "Copied" : "Copy"}
-                </button>
+            <div className="p-4 pb-2">
+              <div className="bg-amber-50 border border-amber-200 rounded p-2 mb-3">
+                <p className="text-[10px] uppercase tracking-wide text-amber-800 font-semibold mb-1">
+                  Booking reference
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs font-mono break-all text-gray-900">
+                    {b.id}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyId(b.id)}
+                    className="text-[11px] font-medium px-2 py-0.5 rounded border border-amber-300 hover:bg-amber-100 text-amber-800 whitespace-nowrap"
+                  >
+                    {copiedId === b.id ? "Copied" : "Copy"}
+                  </button>
+                </div>
               </div>
             </div>
-            <h2 className="text-lg font-semibold">{b.type}</h2>
-            <p className="text-sm text-gray-500">{b.location}</p>
-            <div className="mt-2 space-y-1 text-sm">
-              <p>
-                <span className="font-medium">Start:</span> {b.startDate}
-              </p>
-              <p>
-                <span className="font-medium">End:</span> {b.endDate}
-              </p>
-              <p>
-                <span className="font-medium">Daily Rate:</span> {formatPrice(b.dailyRate)}
-              </p>
-              <p>
-                <span className="font-medium">Total:</span>{" "}
-                {b.totalPrice != null ? formatPrice(b.totalPrice) : "TBD"}
-              </p>
-              <p>
-                <span className="font-medium">Car:</span> {carDisplay(b)}
-              </p>
-            </div>
-            <div className="mt-auto pt-3 flex items-center justify-between">
+            <Link
+              to={`/bookings/${b.id}`}
+              className="px-4 pb-3 block hover:bg-gray-50 rounded-b-lg"
+            >
+              <h2 className="text-lg font-semibold">{b.type}</h2>
+              <p className="text-sm text-gray-500">{b.location}</p>
+              <div className="mt-2 space-y-1 text-sm text-gray-700">
+                <p>
+                  <span className="font-medium">Start:</span> {b.startDate}
+                </p>
+                <p>
+                  <span className="font-medium">End:</span> {b.endDate}
+                </p>
+                <p>
+                  <span className="font-medium">Daily Rate:</span> {formatPrice(b.dailyRate)}
+                </p>
+                <p>
+                  <span className="font-medium">Total:</span>{" "}
+                  {b.totalPrice != null ? formatPrice(b.totalPrice) : "TBD"}
+                </p>
+                <p>
+                  <span className="font-medium">Car:</span> {carDisplay(b)}
+                </p>
+              </div>
+            </Link>
+            <div className="mt-auto px-4 py-3 border-t border-gray-100 flex items-center justify-between">
               <span
                 className={`text-xs font-medium px-2 py-1 rounded ${
                   statusStyles[b.status] ?? "bg-gray-100 text-gray-500"

@@ -11,6 +11,7 @@ import CarManagement from "./pages/admin/CarManagement";
 import BookingManagement from "./pages/admin/BookingManagement";
 import UserManagement from "./pages/admin/UserManagement";
 import MyBookings from "./pages/MyBookings";
+import BookingDetail from "./pages/BookingDetail";
 
 function Header() {
   const { auth, logout } = useAuth();
@@ -103,6 +104,14 @@ function App() {
                   <Routes>
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
+                    <Route
+                      path="/bookings/:bookingId"
+                      element={
+                        <ProtectedRoute>
+                          <BookingDetail />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route
                       path="/bookings"
                       element={
