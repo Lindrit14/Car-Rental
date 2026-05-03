@@ -1,9 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { getCars, createCar, updateCar, deleteCar } from "../../api/cars";
-import type { Car, CreateCarRequest, CarType } from "../../types";
-import CityAutocomplete from "../../components/CityAutocomplete";
+import type { Car, CreateCarRequest, CarType, TransmissionType } from "../../types";
+import LocationSelect from "../../components/LocationSelect";
+import { getLocations, isCanonicalLocation, type Location } from "../../api/locations";
 
 const CAR_TYPES: CarType[] = ["ECONOMY", "COMPACT", "SUV", "VAN", "ELECTRIC", "LUXURY"];
+const TRANSMISSION_TYPES: TransmissionType[] = ["AUTOMATIC", "MANUAL"];
 
 const emptyForm: CreateCarRequest = {
   brand: "",
@@ -13,6 +15,10 @@ const emptyForm: CreateCarRequest = {
   dailyRate: 0,
   carType: "ECONOMY",
   location: "",
+  seats: 5,
+  transmissionType: "AUTOMATIC",
+  largeLuggage: 1,
+  smallLuggage: 1,
 };
 
 export default function CarManagement() {
@@ -23,6 +29,7 @@ export default function CarManagement() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CreateCarRequest>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+  const [allowedLocations, setAllowedLocations] = useState<Location[]>([]);
 
   function loadCars() {
     setLoading(true);
@@ -42,6 +49,12 @@ export default function CarManagement() {
     loadCars();
   }, []);
 
+  useEffect(() => {
+    getLocations()
+      .then(setAllowedLocations)
+      .catch(() => setAllowedLocations([]));
+  }, []);
+
   function openAddForm() {
     setEditingId(null);
     setForm(emptyForm);
@@ -58,6 +71,10 @@ export default function CarManagement() {
       dailyRate: car.dailyRate,
       carType: car.carType,
       location: car.location,
+      seats: car.seats ?? 5,
+      transmissionType: car.transmissionType ?? "AUTOMATIC",
+      largeLuggage: car.largeLuggage ?? 1,
+      smallLuggage: car.smallLuggage ?? 1,
     });
     setShowForm(true);
   }
@@ -70,8 +87,14 @@ export default function CarManagement() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setSubmitting(true);
     setError(null);
+
+    if (!isCanonicalLocation(form.location.trim(), allowedLocations)) {
+      setError("Please pick a location from the dropdown.");
+      return;
+    }
+
+    setSubmitting(true);
     try {
       if (editingId !== null) {
         await updateCar(editingId, form);
@@ -98,7 +121,10 @@ export default function CarManagement() {
     }
   }
 
-  function updateField(field: keyof CreateCarRequest, value: string | number) {
+  function updateField(
+    field: keyof CreateCarRequest,
+    value: string | number | undefined,
+  ) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -212,14 +238,81 @@ export default function CarManagement() {
                   ))}
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Transmission
+                </label>
+                <select
+                  required
+                  value={form.transmissionType}
+                  onChange={(e) => updateField("transmissionType", e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {TRANSMISSION_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Seats
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={1}
+                  max={8}
+                  value={form.seats}
+                  onChange={(e) => updateField("seats", Number(e.target.value))}
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Large luggage
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  value={form.largeLuggage ?? ""}
+                  onChange={(e) =>
+                    updateField(
+                      "largeLuggage",
+                      e.target.value === "" ? undefined : Number(e.target.value),
+                    )
+                  }
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Small luggage
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={form.smallLuggage ?? ""}
+                  onChange={(e) =>
+                    updateField(
+                      "smallLuggage",
+                      e.target.value === "" ? undefined : Number(e.target.value),
+                    )
+                  }
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Location
                 </label>
-                <CityAutocomplete
+                <LocationSelect
                   value={form.location}
                   onChange={(val) => updateField("location", val)}
-                  placeholder="Enter a city"
+                  placeholder="Pick an airport, city or station"
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -260,6 +353,8 @@ export default function CarManagement() {
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Model</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Year</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Type</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700">Trans.</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700">Seats</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">License</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Rate</th>
@@ -276,6 +371,8 @@ export default function CarManagement() {
                   <td className="px-4 py-3">{car.model}</td>
                   <td className="px-4 py-3">{car.year}</td>
                   <td className="px-4 py-3">{car.carType}</td>
+                  <td className="px-4 py-3">{car.transmissionType ?? "-"}</td>
+                  <td className="px-4 py-3">{car.seats ?? "-"}</td>
                   <td className="px-4 py-3">{car.licensePlate}</td>
                   <td className="px-4 py-3">{car.location}</td>
                   <td className="px-4 py-3">${(car.dailyRate ?? 0).toFixed(2)}</td>

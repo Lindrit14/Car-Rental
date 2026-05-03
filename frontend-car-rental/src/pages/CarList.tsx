@@ -4,7 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import AuthModal from "../components/AuthModal";
 import BookingModal from "../components/BookingModal";
 import type { Car, CarType } from "../types";
-import CityAutocomplete from "../components/CityAutocomplete";
+import LocationSelect from "../components/LocationSelect";
+import { getLocations, isCanonicalLocation, type Location } from "../api/locations";
 import CarResultCard from "../components/CarResultCard";
 import { useCurrency } from "../context/CurrencyContext";
 
@@ -45,6 +46,7 @@ export default function CarList() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [bookingParams, setBookingParams] = useState<{ type: CarType; location: string; dailyRate: number } | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [allowedLocations, setAllowedLocations] = useState<Location[]>([]);
   const { auth } = useAuth();
   const { formatPrice } = useCurrency();
 
@@ -60,9 +62,21 @@ export default function CarList() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    getLocations()
+      .then(setAllowedLocations)
+      .catch(() => setAllowedLocations([]));
+  }, []);
+
   function handleSearch(e: FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!isCanonicalLocation(location.trim(), allowedLocations)) {
+      setError("Please pick a location from the dropdown.");
+      return;
+    }
+
     setLoading(true);
     setHasSearched(true);
     setCars(null);
@@ -125,7 +139,7 @@ export default function CarList() {
               <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5 px-1">
                 Location
               </label>
-              <CityAutocomplete
+              <LocationSelect
                 value={location}
                 onChange={setLocation}
                 placeholder="Airport, city or station"

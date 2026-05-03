@@ -7,6 +7,12 @@
 {$PUBLIC_HOSTNAME} {
     encode zstd gzip
 
+    # Locations microservice (Node/Express) — curated Austrian locations REST API.
+    # MUST stay ABOVE the /api/* block so this more specific path wins.
+    handle /api/locations* {
+        reverse_proxy locations:3000
+    }
+
     # Spring Boot API.
     handle /api/* {
         reverse_proxy api:8080

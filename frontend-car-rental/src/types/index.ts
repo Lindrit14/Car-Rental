@@ -1,5 +1,6 @@
 // --- Car ---
 export type CarType = "ECONOMY" | "COMPACT" | "SUV" | "VAN" | "ELECTRIC" | "LUXURY";
+export type TransmissionType = "AUTOMATIC" | "MANUAL";
 
 export interface CreateCarRequest {
   brand: string;
@@ -9,6 +10,10 @@ export interface CreateCarRequest {
   dailyRate: number;
   carType: CarType;
   location: string;
+  seats: number;
+  transmissionType: TransmissionType;
+  largeLuggage?: number;
+  smallLuggage?: number;
 }
 
 export interface UpdateCarRequest {
@@ -19,6 +24,10 @@ export interface UpdateCarRequest {
   carType?: string;
   dailyRate?: number;
   location?: string;
+  seats?: number;
+  transmissionType?: TransmissionType;
+  largeLuggage?: number;
+  smallLuggage?: number;
 }
 
 export interface Car {
@@ -30,6 +39,10 @@ export interface Car {
   dailyRate: number;
   carType: CarType;
   location: string;
+  seats?: number;
+  transmissionType?: TransmissionType;
+  largeLuggage?: number;
+  smallLuggage?: number;
 }
 
 // --- Auth ---

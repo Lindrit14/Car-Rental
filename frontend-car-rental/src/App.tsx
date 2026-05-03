@@ -11,7 +11,6 @@ import CarManagement from "./pages/admin/CarManagement";
 import BookingManagement from "./pages/admin/BookingManagement";
 import UserManagement from "./pages/admin/UserManagement";
 import MyBookings from "./pages/MyBookings";
-import GoogleMapsProvider from "./components/GoogleMapsProvider";
 
 function Header() {
   const { auth, logout } = useAuth();
@@ -77,7 +76,6 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <GoogleMapsProvider>
     <AuthProvider>
       <CurrencyProvider>
       <BrowserRouter>
@@ -123,7 +121,6 @@ function App() {
       </BrowserRouter>
       </CurrencyProvider>
     </AuthProvider>
-    </GoogleMapsProvider>
   );
 }
 

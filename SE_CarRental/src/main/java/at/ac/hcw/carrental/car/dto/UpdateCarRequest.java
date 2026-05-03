@@ -38,7 +38,7 @@ public class UpdateCarRequest {
     @Max(value = 8)
     private Integer seats;
 
-    @NotBlank(message = "Transmission type cannot be blank")
+    @NotNull(message = "Transmission type is required")
     private CarEntity.TransmissionType transmissionType;
 
     @Positive

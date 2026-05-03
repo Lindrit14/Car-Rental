@@ -36,7 +36,7 @@ public class CreateCarRequest {
     @Max(value = 8)
     private Integer seats;
 
-    @NotBlank
+    @NotNull(message = "Transmission type is required")
     private CarEntity.TransmissionType transmissionType;
 
     @Positive
